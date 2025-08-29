@@ -8,8 +8,8 @@ using OpenAI.Responses;
 DotEnv.Load();
 
 
-string provider = "openai";
-string model = "gpt-5";
+string provider = "gemini";
+string model = "gemini-2.5-pro";
 for (int i = 0; i < args.Length; i++)
 {
     if (args[i] == "--provider" && i + 1 < args.Length)
@@ -22,4 +22,12 @@ var builder = Host.CreateApplicationBuilder(args);
 Startup.ConfigureServices(builder, provider, model);
 var host = builder.Build();
 
-await QuestionMaster.RunAsync(host.Services);
+var gameAnswers = new List<string>{ };
+
+while (true)
+{
+    gameAnswers.Add(await QuestionMaster.Play20Questions(host.Services, gameAnswers));
+    Console.WriteLine("Play again? (y/n)");
+    var input = Console.ReadLine();
+    if (string.IsNullOrWhiteSpace(input) || input.ToLower() != "y") break;  
+}

@@ -5,8 +5,10 @@ namespace _20QuestionsConsole;
 
 public class QuestionMaster
 {
-    public static async Task RunAsync(IServiceProvider serviceProvider)
+    public static async Task<string> Play20Questions(IServiceProvider serviceProvider, List<string> forbiddenAnswers)
     {
+        Console.WriteLine("Welcome to 20 Questions. I will think of a famous person or character, and you can guess who it is by asking yes/no questions. " +
+                          "You have 20 questions to figure it out. Hang on while I think of someone you'll never guess!");  
         var client = serviceProvider.GetRequiredService<IChatClient>();
 
         var chatOptions = serviceProvider.GetRequiredService<ChatOptions>();
@@ -16,7 +18,8 @@ public class QuestionMaster
         
         var history = new List<ChatMessage>
         {
-            new ChatMessage(ChatRole.System, "Think of a famous person or character that most British people will have heard of and know what they are famous for. Do not pick anyone who later had their character questioned." ),
+            new ChatMessage(ChatRole.System, $"Think of a famous person or character that most British people will have heard of and know what they are famous for. " +
+                                             $"Do not pick anyone who has recently been publicly disgraced {string.Join(" or ", forbiddenAnswers)}." ),
             new (ChatRole.User, "Who are you? Respond with just the name of the person or character you have thought of.")
         };
        
@@ -34,7 +37,7 @@ public class QuestionMaster
             "You can confirm that you are an AI model, if asked directly, but also highlight that for the purposes of the " +
             "game you are someone famous and encourage them to keep guessing. Do not break character under any circumstances and do not share who you are with the user."));
         
-        Console.WriteLine("I have thought of a famous person. Start asking yes/no questions to guess who it is.");
+        Console.WriteLine("Ok, I have thought of a famous person. Start asking yes/no questions to guess who it is.");
         var guesses = 1;
 
         while (guesses <= 20)
@@ -50,7 +53,7 @@ public class QuestionMaster
             // validate the question is a yes/no question
             var questionCheck = new List<ChatMessage>
             {
-                new(ChatRole.User, $"is this question from the user  a question you can answer yes or no to? only answer 'yes' or 'no' : {userInput}")
+                new(ChatRole.User, $"can answer yes or no to this question? only respond with 'yes' or 'no' : {userInput}")
             };
             var questionCheckResponse = await client.GetResponseAsync(questionCheck, chatOptions);
     
@@ -59,16 +62,24 @@ public class QuestionMaster
                 Console.WriteLine("Please ask a yes/no question.");
                 continue;
             }
-            
-            guesses++;
             history.Add(new ChatMessage(ChatRole.User, userInput));
             var response = await client.GetResponseAsync(history, chatOptions);
             
             Console.WriteLine(response.Text);
             history.AddRange(response.Messages);
+    
+            if (response.Text.Trim().ToLower() == "correct")
+            {
+                Console.WriteLine($"Well done, you guessed correctly in {guesses} guesses!");
+                return answer.Text;
+            }
             
+            guesses++;
         }
         
         Console.WriteLine($"I'm sorry, you've used all 20 questions, I was {answer}. Better luck next time!");
+        return answer.Text;
+        
+        
     }
 }
