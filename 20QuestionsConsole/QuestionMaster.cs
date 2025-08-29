@@ -17,12 +17,12 @@ public class QuestionMaster
         var history = new List<ChatMessage>
         {
             new ChatMessage(ChatRole.System, "Think of a famous person or character that most British people will have heard of and know what they are famous for. Do not pick anyone who later had their character questioned." ),
-            new (ChatRole.System, "Who are you? Respond with just the name of the person or character you have thought of.")
+            new (ChatRole.User, "Who are you? Respond with just the name of the person or character you have thought of.")
         };
        
         var answer = await client.GetResponseAsync(history, chatOptions);
         history.Add(new ChatMessage(ChatRole.Assistant, answer.Text));
-
+        history.Clear();
         history.Add(new ChatMessage(ChatRole.System,
             $"You are a 20 Questions game master and in this game you are {answer.Text}.  The " +
             "user will try to guess who you are by asking yes/no questions. You can be encouraging when the user " +
@@ -50,7 +50,7 @@ public class QuestionMaster
             // validate the question is a yes/no question
             var questionCheck = new List<ChatMessage>
             {
-                new(ChatRole.System, $"is this question from the user  a question you can answer yes or no to? only answer 'yes' or 'no' : {userInput}")
+                new(ChatRole.User, $"is this question from the user  a question you can answer yes or no to? only answer 'yes' or 'no' : {userInput}")
             };
             var questionCheckResponse = await client.GetResponseAsync(questionCheck, chatOptions);
     
@@ -67,11 +67,6 @@ public class QuestionMaster
             Console.WriteLine(response.Text);
             history.AddRange(response.Messages);
             
-            if (response.Text.Trim().ToLower() == "correct")
-            {
-                Console.WriteLine($"Well done! You've guessed it in {guesses - 1} questions, I was {answer.Text}.");
-                return;
-            }
         }
         
         Console.WriteLine($"I'm sorry, you've used all 20 questions, I was {answer}. Better luck next time!");
