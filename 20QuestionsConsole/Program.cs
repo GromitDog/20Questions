@@ -8,8 +8,8 @@ using OpenAI.Responses;
 DotEnv.Load();
 
 
-string provider = "gemini";
-string model = "gemini-2.5-pro";
+string provider = "claude";
+string model = "claude-sonnet-4-0";
 for (int i = 0; i < args.Length; i++)
 {
     if (args[i] == "--provider" && i + 1 < args.Length)

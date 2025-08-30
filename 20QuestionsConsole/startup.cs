@@ -1,3 +1,4 @@
+using Anthropic.SDK;
 using GeminiDotnet.Extensions.AI;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,7 +32,7 @@ public static class Startup
 
                 "gemini" => new GeminiChatClient(new GeminiDotnet.GeminiClientOptions { ApiKey = geminiKey, ModelId = model, ApiVersion = GeminiApiVersions.V1Beta }),
 
-                //"claude" => new AnthropicClient(new APIAuthentication(claudeKey)).Messages,
+                 "claude" => new AnthropicClient(new APIAuthentication(claudeKey)).Messages,
 
                 _ => throw new ArgumentException($"Unknown provider: {provider}")
             };
@@ -49,6 +50,7 @@ public static class Startup
         {
             ModelId = model,
             Temperature = 1,
+            MaxOutputTokens = 5000 // needed for claude
         });
 
 
