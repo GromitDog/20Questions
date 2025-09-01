@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Hosting;
 using GeminiDotnet;
 
-namespace _20QuestionsConsole;
+namespace TwentyQuestionsConsole;
 
 public static class Startup
 {
@@ -48,11 +48,13 @@ public static class Startup
 
         builder.Services.AddTransient<ChatOptions>(sp => new ChatOptions
         {
+            Tools = [.. sp.GetTools()],
             ModelId = model,
             Temperature = 1,
             MaxOutputTokens = 5000 // needed for claude
         });
 
+        builder.Services.AddSingleton<GameService>();
 
     }
 }

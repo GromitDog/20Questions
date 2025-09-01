@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "20QuestionsConsole", "20QuestionsConsole\20QuestionsConsole.csproj", "{BA8D3984-BCA6-4E03-B746-2BA3346EF451}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TwentyQuestionsConsole", "TwentyQuestionsConsole\TwentyQuestionsConsole.csproj", "{BA8D3984-BCA6-4E03-B746-2BA3346EF451}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
