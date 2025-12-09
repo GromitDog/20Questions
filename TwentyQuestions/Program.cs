@@ -1,7 +1,7 @@
+using Microsoft.EntityFrameworkCore;
 using Radzen;
 using TwentyQuestions.Components;
 using TwentyQuestions.Services;
-using TwentyQuestionsConsole;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,18 +12,11 @@ builder.Services.AddRazorComponents()
 builder.Services.AddRadzenComponents();
 builder.Services.AddControllers();
 
-builder.Services.AddScoped(sp =>
-{
-    var httpClient = new HttpClient
-    {
-        BaseAddress = new Uri(builder.Configuration.GetValue<string>("BaseAddress") ?? "https://localhost:7000/")
-    };
-    return httpClient;
-});
-
 builder.Services.AddScoped<GameService>();
-builder.Services.AddSingleton<GameRepository>();
 builder.Services.AddSingleton<QuestionService>();
+
+builder.Services.AddDbContext<TwentyQuestions.Data.GameContext>(options =>
+    options.UseSqlite("Data Source=games.db"));
 
 var app = builder.Build();
 

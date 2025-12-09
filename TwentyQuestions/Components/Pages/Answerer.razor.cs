@@ -1,7 +1,8 @@
+using System.Linq.Expressions;
 using Microsoft.AspNetCore.Components;
 using Radzen.Blazor;
+using TwentyQuestions.Models;
 using TwentyQuestions.Services;
-using TwentyQuestionsConsole;
 
 namespace TwentyQuestions.Components.Pages;
 
@@ -33,36 +34,14 @@ public partial class Answerer : ComponentBase, IDisposable
     
     protected override void OnInitialized()
     {
-        if ( string.IsNullOrWhiteSpace(UserName))
+        if (string.IsNullOrWhiteSpace(UserName))
         {
             _errorMessages.Add("User name is required to start the game.");
             return;
         }
-        
-        _isLoading = true;
-        _errorMessages.Clear();
 
-        try
-        {
-            Users.AddRange(MessageService.GetUsers());
-            
-            MessageService.UsersChanged += OnUsersChanged;
-            
-            var answer = new ChatUser { Id = AnswererId, Name = UserName, Color = "#1976d2" }; // todo: what is this colour?
-            MessageService.AddUser(answer);
-           
-            Messages = MessageService.GetMessages().ToList();
-            MessageService.QuestionAnswered += OnQuestionAnswered;
-            MessageService.QuestionAsked += OnQuestionAsked;
-        }
-        catch (Exception ex)
-        {
-            _errorMessages.Add($"Error: {ex.Message}");
-        }
-        finally
-        {
-            _isLoading = false;
-        }
+        _isLoading = false;
+        _errorMessages.Clear();
     }
 
     private void OnQuestionAnswered()
@@ -78,19 +57,45 @@ public partial class Answerer : ComponentBase, IDisposable
     {       
         _ = InvokeAsync(() =>
         {
-            Messages = MessageService.GetMessages().ToList();
+            Messages = MessageService.GetMessages(_game.Id).ToList();
             _waitingForQuestion = false;
             StateHasChanged();
         });
     }
     
-    private void OnAnswerGiven(ChatMessage newMessage)
+    private async Task OnAnswerGiven(Answer answer, string ? customAnswerContent = null)
     {
-        if (_disposed) return;
+        if (_disposed || _game is null) return;
+
+        await GameService.AnswerQuestion(_game.Id, answer);
+        
+        var newMessage = new ChatMessage()
+        {
+            UserId = AnswererId,
+            IsUser = true
+        };
+        
+        switch (answer)
+        {
+            case Answer.Yes:
+                newMessage.Content = "Yes";
+                break;
+            case Answer.No:
+                newMessage.Content = "No";
+                break;
+            case Answer.DontKnow:
+                newMessage.Content = "I don't know";
+                break;
+        }
+        
+        if (!string.IsNullOrWhiteSpace(customAnswerContent))
+        {
+            newMessage.Content = customAnswerContent;
+        }
         
         _ = InvokeAsync(() =>
         {
-            MessageService.AnswerQuestion(newMessage);
+            MessageService.AnswerQuestion(_game.Id, newMessage);
             Messages.Add(newMessage);
             StateHasChanged();
         });
@@ -107,18 +112,30 @@ public partial class Answerer : ComponentBase, IDisposable
     
     private async Task StartGame()
     {
-        if ( string.IsNullOrWhiteSpace(UserName))
+        if (string.IsNullOrWhiteSpace(UserName))
         {
             _errorMessages.Add("User name is required to start the game.");
             return;
         }
-        
+
         _isLoading = true;
         _errorMessages.Clear();
 
         try
         {
-             _game = await GameService.StartGame(UserName, _characterName);
+            _game = await GameService.StartGame(UserName, _characterName);
+
+            // Now that we have a game, set up the chat for this game
+            Users.AddRange(MessageService.GetUsers(_game.Id));
+
+            MessageService.SubscribeUsersChanged(_game.Id, OnUsersChanged);
+
+            var answer = new ChatUser { Id = AnswererId, Name = UserName, Color = "#1976d2" }; // todo: what is this colour?
+            MessageService.AddUser(_game.Id, answer);
+
+            Messages = MessageService.GetMessages(_game.Id).ToList();
+            MessageService.SubscribeQuestionAnswered(_game.Id, OnQuestionAnswered);
+            MessageService.SubscribeQuestionAsked(_game.Id, OnQuestionAsked);
         }
         catch (Exception ex)
         {
@@ -130,41 +147,39 @@ public partial class Answerer : ComponentBase, IDisposable
         }
     }
 
-    private void AnswerYes()
+    private async Task AnswerYes()
     {
-        OnAnswerGiven(new ChatMessage()
-        {
-            Content = "Yes",
-            UserId = AnswererId,
-            IsUser = true
-        });
+        await OnAnswerGiven(Answer.Yes);
     }
     
-    private void AnswerNo()
+    private async Task AnswerNo()
     {
-        OnAnswerGiven(new ChatMessage()
-        {
-            Content = "No",
-            UserId = AnswererId,
-            IsUser = true
-        });
+        await OnAnswerGiven(Answer.No);
     }
     
-    private void AnswerDontKnow()
+    private async Task AnswerDontKnow()
     {
-        OnAnswerGiven(new ChatMessage()
-        {
-            Content = "I don't know",
-            UserId = AnswererId,
-            IsUser = true
-        });
+        await OnAnswerGiven(Answer.DontKnow);
+    }
+        
+    private async Task AskerWonGame()
+    {
+        if (_disposed || _game is null) return;
+        
+        await GameService.WinGame(_game.Id);
+        _game.WinGame();
+        
+        await OnAnswerGiven(Answer.Yes, "Yes, you won!");
     }
     
     public void Dispose()
     {
         _disposed = true;
-        MessageService.QuestionAnswered -= OnQuestionAnswered;
-        MessageService.QuestionAsked -= OnQuestionAsked;
-        MessageService.UsersChanged -= OnUsersChanged;
+        if (_game is not null)
+        {
+            MessageService.UnsubscribeQuestionAnswered(_game.Id, OnQuestionAnswered);
+            MessageService.UnsubscribeQuestionAsked(_game.Id, OnQuestionAsked);
+            MessageService.UnsubscribeUsersChanged(_game.Id, OnUsersChanged);
+        }
     }
 }

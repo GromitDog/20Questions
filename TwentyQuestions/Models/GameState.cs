@@ -1,4 +1,4 @@
-namespace TwentyQuestionsConsole;
+namespace TwentyQuestions.Models;
 
 public class GameState(string answererUserName, string characterName)
 {
@@ -11,8 +11,8 @@ public class GameState(string answererUserName, string characterName)
     public string? AskerUserName { get; set; }
     
     const int MaxQuestions  = 20;
-    public int QuestionsAsked => Questions.Count;
-    public Dictionary<string, Answer> Questions { get; } = new();
+    public int QuestionsAnswered => Questions.Count(q => q.Answer is not null && q.Answer != Answer.InvalidQuestion);
+    public List<Question> Questions { get; } = [];
     public bool IsOver { get; private set; }
     public bool IsWon { get; set; }
     
@@ -24,21 +24,38 @@ public class GameState(string answererUserName, string characterName)
         AskerUserName = askerUserName;
     }
     
-    public void RegisterQuestion(string question, Answer answer)
+    public void AskQuestion(string question)
+    {
+        if (IsOver)
+            throw new InvalidOperationException("The game is already over, you cannot register additional questions and answers");
+
+        if (Questions.Any(q => q.Answer is null))
+            throw new InvalidOperationException("You must wait for an answer to the previous question before asking a new one.");
+
+        Questions.Add(new Question(){QuestionText = question, GameStateId = Id});
+
+        if (QuestionsAnswered >= MaxQuestions) IsOver = true;
+    }
+        
+    public void AnswerQuestion(Guid questionId, Answer answer)
     {
         if (IsOver)
             throw new InvalidOperationException("The game is already over, you cannot register additional questions and answers");
         
-        Questions[question] = answer;
+        var question = Questions.FirstOrDefault(q => q.QuestionId == questionId);
+        
+        if (question is null)
+            throw new ArgumentException("The question with the specified ID was not found in the current game.");
+        
+        question.Answer = answer;
        
-        if (QuestionsAsked >= MaxQuestions) IsOver = true;
+        if (QuestionsAnswered >= MaxQuestions) IsOver = true;
     }
 
-    public void WinGame(string question, Answer answer)
+    public void WinGame()
     {
         if (IsOver)
             throw new InvalidOperationException("The game is already over, it cannot now be won");
-        Questions.Add(question, answer);
         IsWon = true;
         IsOver = true;
     }
@@ -49,11 +66,17 @@ public class GameState(string answererUserName, string characterName)
             throw new InvalidOperationException("The game is already over, so the user cannot give up");
         IsOver = true;
     }
+    
+    public Guid? QuestionAwaitingAnswerId()
+    {
+        return Questions.FirstOrDefault(q => q.Answer is null)?.QuestionId;
+    }
 }
 
 public enum Answer
 {
     Yes,
     No,
-    DontKnow
+    DontKnow,
+    InvalidQuestion
 }

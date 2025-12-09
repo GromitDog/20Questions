@@ -1,10 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using Radzen.Blazor;
 using TwentyQuestions.Services;
-using Microsoft.AspNetCore.Components;
-using Radzen.Blazor;
-using TwentyQuestions.Services;
-using TwentyQuestionsConsole;
+using TwentyQuestions.Models;
 
 namespace TwentyQuestions.Components.Pages;
 
@@ -13,8 +10,8 @@ public partial class Asker : ComponentBase, IDisposable
     [Inject] public required GameService GameService { get; set; }
     [Inject] public required QuestionService MessageService { get; set; }
     
-    [SupplyParameterFromQuery(Name = "username")]
-    public string? UserName { get; set; }
+    [SupplyParameterFromQuery(Name = "gameId")]
+    public Guid GameId { get; set; }
     
     private const string AskerId = "Asker";
     
@@ -31,9 +28,9 @@ public partial class Asker : ComponentBase, IDisposable
 
     protected override async Task OnInitializedAsync()
     {
-        if ( string.IsNullOrWhiteSpace(UserName))
+        if (string.IsNullOrWhiteSpace(GameId.ToString()))
         {
-            _errorMessages.Add("User name is required to start the game.");
+            _errorMessages.Add("GameId is required to join a game.");
             return;
         }
         
@@ -42,20 +39,26 @@ public partial class Asker : ComponentBase, IDisposable
 
         try
         {
-            _game = await GameService.GetCurrentGame();
-            
-            if (_game == null) _errorMessages.Add("No active game found. Please try again later.");
-            
-            Users.AddRange(MessageService.GetUsers());
-            
-            MessageService.UsersChanged += OnUsersChanged;
-            
-            var asker = new ChatUser { Id = AskerId, Name = UserName, Color = "#1976d2" }; // todo: what is this colour?
-            MessageService.AddUser(asker);
-           
-            Messages = MessageService.GetMessages().ToList();
-            MessageService.QuestionAnswered += OnQuestionAnswered;
-            MessageService.QuestionAsked += OnQuestionAsked;
+            _game = await GameService.GetGame(GameId);
+
+            if (_game == null)
+            {
+                _errorMessages.Add($"No game with ID {GameId} found. Please try again.");
+                return;
+            }
+
+            var userName = _game.AskerUserName;
+
+            Users.AddRange(MessageService.GetUsers(GameId));
+
+            MessageService.SubscribeUsersChanged(GameId, OnUsersChanged);
+
+            var asker = new ChatUser { Id = AskerId, Name = userName, Color = "#1976d2" }; // todo: what is this colour?
+            MessageService.AddUser(GameId, asker);
+
+            Messages = MessageService.GetMessages(GameId).ToList();
+            MessageService.SubscribeQuestionAnswered(GameId, OnQuestionAnswered);
+            MessageService.SubscribeQuestionAsked(GameId, OnQuestionAsked);
         }
         catch (Exception ex)
         {
@@ -71,7 +74,7 @@ public partial class Asker : ComponentBase, IDisposable
     {
         _ = InvokeAsync(() =>
         {
-            Messages = MessageService.GetMessages().ToList();
+            Messages = MessageService.GetMessages(GameId).ToList();
             _waitingForAnswer = false;
             StateHasChanged();
         });
@@ -95,14 +98,17 @@ public partial class Asker : ComponentBase, IDisposable
         });
     }
     
-    private void OnQuestionSent(IEnumerable<ChatMessage> newMessages)
+    private async Task OnQuestionSent(IEnumerable<ChatMessage> newMessages)
     {
-        if (_disposed) return;
+        if (_disposed || _game is null) return;
         
+        var messages = newMessages.ToList();
+        
+        await GameService.AskQuestion(_game.Id, messages.Last().Content);
+            
         _ = InvokeAsync(() =>
         {
-            Messages = newMessages.ToList();
-            MessageService.AskQuestion(Messages.Last());
+            MessageService.AskQuestion(_game.Id, messages.Last());
             StateHasChanged();
         });
     }
@@ -110,8 +116,8 @@ public partial class Asker : ComponentBase, IDisposable
     public void Dispose()
     {
         _disposed = true;
-        MessageService.QuestionAnswered -= OnQuestionAnswered;
-        MessageService.QuestionAsked -= OnQuestionAsked;
-        MessageService.UsersChanged -= OnUsersChanged;
+        MessageService.UnsubscribeQuestionAnswered(GameId, OnQuestionAnswered);
+        MessageService.UnsubscribeQuestionAsked(GameId, OnQuestionAsked);
+        MessageService.UnsubscribeUsersChanged(GameId, OnUsersChanged);
     }
 }

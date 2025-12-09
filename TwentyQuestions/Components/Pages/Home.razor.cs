@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Radzen;
+using TwentyQuestions.Data;
+using TwentyQuestions.Models;
 using TwentyQuestions.Services;
-using TwentyQuestionsConsole;
 
 namespace TwentyQuestions.Components.Pages;
 
@@ -11,13 +11,14 @@ public partial class Home
     [Inject] public required NavigationManager NavigationManager { get; set; }
     [Inject] public required GameService GameService { get; set; }
 
-    private bool _isLoading = false;
+    private bool _isLoading;
     private string _userName = "";
-    private GameState? _currentGame = null;
+    private Guid? _selectedGameId = null;
+    private IEnumerable<Guid> _availableGames = Enumerable.Empty<Guid>();
 
     private bool CanJoin()
     {
-        return !string.IsNullOrWhiteSpace(_userName) && _currentGame is not null;
+        return _availableGames.Count() > 0;
     }
 
     protected override async Task OnInitializedAsync()
@@ -27,18 +28,13 @@ public partial class Home
         await base.OnInitializedAsync();
         GameService.GameChanged += OnGameChanged;
 
-        _currentGame = await GameService.GetCurrentGame();
+        _availableGames = (await GameService.GetCurrentGames()).Select(g => g.Id);
         
         _isLoading = false;
-    }    
-    
+    }
+
     private void OnGameChanged(GameState? state)
     {
-        if (state is null || state.IsOver)
-            _currentGame = null;
-        else
-            _currentGame = state;
-        
         InvokeAsync(StateHasChanged);
     }
     
@@ -49,9 +45,32 @@ public partial class Home
     }
 
     
-    private void Join()
+    private async Task Join()
     {
-        // redirect to Answerer page
-        NavigationManager.NavigateTo($"/asker?username={Uri.EscapeDataString(_userName)}");
+        if (_selectedGameId is null)
+            return;
+        try
+        {
+            var game = await GameService.GetGame(_selectedGameId.Value);
+            if (game is null)
+                throw new KeyNotFoundException("Game not found");
+            
+            game.JoinGame(_userName);
+
+            // redirect to Asker page
+            NavigationManager.NavigateTo($"/asker?gameId={Uri.EscapeDataString(_selectedGameId!.ToString()!)}");
+        } 
+        catch (Exception e)
+        {
+            // show error message
+            var messageService = new NotificationService();
+            messageService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = $"The selected game does not exist: {e.Message}",
+                Duration = 4000
+            });
+        }
     }
 }

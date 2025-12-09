@@ -6,25 +6,24 @@
 <PageTitle>Home</PageTitle>
 
 <RadzenText TextStyle="TextStyle.H1">Welcome to 20 Questions</RadzenText>
-
-
 @if (_isLoading)
 {
     <RadzenProgressBar Mode="ProgressBarMode.Indeterminate" />
-    <div>Waiting for answerer to get ready...</div>
+    <div>Waiting for games to load...</div>
 }
 else
 {
     <RadzenCard>
         <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Your Name</RadzenText>
         <RadzenTextBox @bind-Value="@_userName" Style="width: 100%" aria-label="Default TextBox"/>
-    </RadzenCard>
-    @if (_currentGame is null && !CanJoin())
-    {
         <RadzenButton Text="Start Game" Click="@Start"/>
-    }
-    else
-    {
-        <RadzenButton Text="Join Game" Click="@Join"/>
-    }
+
+        @if (CanJoin())
+        {
+            <RadzenDropDown @bind-Value="@_selectedGameId"
+                            Data="@_availableGames"
+                            Placeholder="Select a game to join"/>
+            <RadzenButton Text="Join Game" Click="@Join"/>
+        }
+    </RadzenCard>
 }

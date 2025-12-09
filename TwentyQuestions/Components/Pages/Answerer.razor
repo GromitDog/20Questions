@@ -42,7 +42,7 @@
     <RadzenCard Variant="Variant.Flat">
         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" Wrap="FlexWrap.Wrap">
             <RadzenText TextStyle="TextStyle.H5">
-                <h5>Game Started!</h5>
+                Game Started!
             </RadzenText>
             <RadzenText TextStyle="TextStyle.H5">
                 <strong>Game ID:</strong> @_game.Id
@@ -51,21 +51,35 @@
                 Share this ID with the questioner to join your game.
             </RadzenText>
         </RadzenStack>
+        
     </RadzenCard>
     
     <RadzenCard>
-        <RadzenText>Answer questions about: @_characterName</RadzenText>
-        
-        <RadzenChat Title="Game Questions and Answers" 
+        <RadzenRow>
+            <RadzenColumn Size="6" SizeSM="12">
+                <RadzenText TextStyle="TextStyle.H6">Answer questions about: @_characterName</RadzenText>
+            </RadzenColumn>
+            <RadzenColumn Size="6" SizeSM="12">
+                <RadzenCard Variant="Variant.Filled" class="rz-background-color-secondary-light rz-shadow-0 rz-border-radius-0 rz-p-8" style="margin: 1rem;">
+                    <RadzenRow>
+                        <RadzenText TextStyle="TextStyle.Body1">Question Number</RadzenText>
+                    </RadzenRow>
+                    <RadzenRow>
+                        <RadzenText TextStyle="TextStyle.H3">@_game?.QuestionsAnswered</RadzenText>
+                    </RadzenRow>
+                </RadzenCard>
+            </RadzenColumn>
+            
+        </RadzenRow>
+        <RadzenChat Title="Game Questions and Answers"
                     CurrentUserId="@AnswererId"
                     Users="@Users"
                     Messages="@Messages"
                     Placeholder=@(_waitingForQuestion ? "Please answer one of the following:" : "Wait for a question...")
                     ShowClearButton="@false"
                     ShowUserNames="true"
-                    ReadOnly="true"
-        />
-        
+                    ReadOnly="true"/>
+
         @if (_waitingForQuestion)
         {
             <RadzenText>Waiting for question...</RadzenText>
@@ -76,6 +90,7 @@
                 <RadzenButton Click="AnswerYes">Yes</RadzenButton>
                 <RadzenButton Click="AnswerNo">No</RadzenButton>
                 <RadzenButton Click="AnswerDontKnow">I don't know</RadzenButton>
+                <RadzenButton Click="AskerWonGame">Correct Guess!</RadzenButton>
             </RadzenStack>
         }
 
