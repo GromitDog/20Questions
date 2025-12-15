@@ -35,7 +35,8 @@ public class QuestionMaster
             $"Be nice, if the same question is asked twice, don't register it, remind them the answer and do not count it as a question." +
 
             "If the user gives up or says they want to abandon the game (e.g., 'I give up', 'give up', 'abandon game', etc.), call abandon_game to update the game state " +
-            "and then provide the user with an appropriate summary of how well they were doing and who you were. Do not reveal the name unless the user guesses it correctly or gives up. Should the " +
+            "and then provide the user with an appropriate summary of how well they were doing and reveal who you were. You should only reveal the character name when the user " +
+            "guesses it correctly or gives up - do not reveal it at any other time. Should the " +
             "user ask a question that is not a yes/no question, do not reveal new information about the character and guide them to ask a question " +
             "that fits with the rules of the game. Do not use the tools to register invalid questions as they should not be counted in the game. " +
             "You can confirm that you are an AI model, if asked directly, but also highlight that for the purposes of the " +
