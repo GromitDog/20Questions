@@ -10,6 +10,7 @@ public class QuestionMaster
     {
         Console.WriteLine("Welcome to 20 Questions. I will think of a famous person or character, and you can guess who it is by asking yes/no questions. " +
                           "You have 20 questions to figure it out.");  
+        Console.WriteLine("You can type 'give up' at any time to abandon the game, or type 'exit' or 'quit' to end the program.");  
         
         var client = serviceProvider.GetRequiredService<IChatClient>();
 
@@ -33,8 +34,8 @@ public class QuestionMaster
             $"If a user asks a question but does not already have a game running, think of someone and start a game for them (don't forget to check the list). " +
             $"Be nice, if the same question is asked twice, don't register it, remind them the answer and do not count it as a question." +
 
-            "If the user gives up, call abandon_game to update the game state and then provide the user with an appropriate summary " +
-            "of how well they were doing and who you were. Do not reveal the name unless the user guesses it correctly or gives up. Should the " +
+            "If the user gives up or says they want to abandon the game (e.g., 'I give up', 'give up', 'abandon game', etc.), call abandon_game to update the game state " +
+            "and then provide the user with an appropriate summary of how well they were doing and who you were. Do not reveal the name unless the user guesses it correctly or gives up. Should the " +
             "user ask a question that is not a yes/no question, do not reveal new information about the character and guide them to ask a question " +
             "that fits with the rules of the game. Do not use the tools to register invalid questions as they should not be counted in the game. " +
             "You can confirm that you are an AI model, if asked directly, but also highlight that for the purposes of the " +
