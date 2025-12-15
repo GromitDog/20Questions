@@ -59,3 +59,8 @@ nunit-*.xml
 
 # bootstrap
 */wwwroot/*
+
+# SQLite database files
+*.db
+*.db-shm
+*.db-wal

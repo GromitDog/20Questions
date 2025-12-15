@@ -172,6 +172,14 @@ public partial class Answerer : ComponentBase, IDisposable
         await OnAnswerGiven(Answer.Yes, "Yes, you won!");
     }
     
+    private async Task AbandonGame()
+    {
+        if (_disposed || _game is null) return;
+        
+        await GameService.AbandonGame(_game.Id);
+        _game.GiveUp();
+    }
+    
     public void Dispose()
     {
         _disposed = true;

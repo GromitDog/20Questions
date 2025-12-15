@@ -113,6 +113,14 @@ public partial class Asker : ComponentBase, IDisposable
         });
     }
     
+    private async Task AbandonGame()
+    {
+        if (_disposed || _game is null) return;
+        
+        await GameService.AbandonGame(_game.Id);
+        _game.GiveUp();
+    }
+    
     public void Dispose()
     {
         _disposed = true;
