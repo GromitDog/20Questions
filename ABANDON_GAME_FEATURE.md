@@ -6,11 +6,9 @@ The 20 Questions game now includes abandon/give up functionality that allows pla
 ## How to Use
 
 ### Console Application
-When playing the game in the console, you can abandon the game at any time by typing phrases like:
-- "I give up"
-- "give up"
-- "abandon game"
-- "I quit" (this also exits the program)
+When playing the game in the console, you can:
+- **Abandon the game**: Type phrases like "I give up", "give up", or "abandon game"
+- **Exit the program**: Type "exit" or "quit"
 
 The AI game master will:
 1. Call the `abandon_game` function to update the game state
