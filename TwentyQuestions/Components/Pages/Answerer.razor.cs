@@ -172,12 +172,27 @@ public partial class Answerer : ComponentBase, IDisposable
         await OnAnswerGiven(Answer.Yes, "Yes, you won!");
     }
     
-    private async Task AbandonGame()
+    private async Task QuitGame()
     {
         if (_disposed || _game is null) return;
         
         await GameService.AbandonGame(_game.Id);
         _game.GiveUp();
+        
+        // Post a message to the chat to provide visual feedback
+        var quitMessage = new ChatMessage()
+        {
+            UserId = AnswererId,
+            IsUser = true,
+            Content = "I quit! The answer was: " + _characterName
+        };
+        
+        _ = InvokeAsync(() =>
+        {
+            MessageService.AnswerQuestion(_game.Id, quitMessage);
+            Messages.Add(quitMessage);
+            StateHasChanged();
+        });
     }
     
     public void Dispose()
