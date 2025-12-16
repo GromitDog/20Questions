@@ -113,6 +113,29 @@ public partial class Asker : ComponentBase, IDisposable
         });
     }
     
+    private async Task GiveUp()
+    {
+        if (_disposed || _game is null) return;
+        
+        await GameService.AbandonGame(_game.Id);
+        _game.GiveUp();
+        
+        // Post a message to the chat to provide visual feedback
+        var giveUpMessage = new ChatMessage()
+        {
+            UserId = AskerId,
+            IsUser = true,
+            Content = "I give up!"
+        };
+        
+        _ = InvokeAsync(() =>
+        {
+            MessageService.AskQuestion(_game.Id, giveUpMessage);
+            Messages.Add(giveUpMessage);
+            StateHasChanged();
+        });
+    }
+    
     public void Dispose()
     {
         _disposed = true;

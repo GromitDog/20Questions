@@ -47,7 +47,9 @@
                     ShowUserNames="true"
                     ReadOnly="@_waitingForAnswer"/>
 
-
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Start" Gap="1rem" Wrap="FlexWrap.Wrap" style="margin-top: 1rem;">
+            <RadzenButton Click="GiveUp" ButtonStyle="ButtonStyle.Danger">Give Up</RadzenButton>
+        </RadzenStack>
 
     </RadzenCard>
 }
